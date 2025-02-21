@@ -63,6 +63,8 @@ class FrameHandler: NSObject, ObservableObject {
         // 그 대리자를 나로 설정하고 extension에서 동작 추가
         videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sampleBufferQueue"))
         captureSession.addOutput(videoOutput)
+        
+        videoOutput.connection(with: .video)?.isVideoMirrored = true
     }
 }
 
