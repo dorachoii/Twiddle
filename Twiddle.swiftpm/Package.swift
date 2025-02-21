@@ -8,18 +8,18 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "My App",
+    name: "Twiddle",
     platforms: [
         .iOS("18.0")
     ],
     products: [
         .iOSApplication(
-            name: "My App",
+            name: "Twiddle",
             targets: ["AppModule"],
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder(icon: .binoculars),
-            accentColor: .presetColor(.orange),
+            appIcon: .placeholder(icon: .rocket),
+            accentColor: .presetColor(.pink),
             supportedDeviceFamilies: [
                 .pad,
                 .phone
@@ -29,6 +29,9 @@ let package = Package(
                 .landscapeRight,
                 .landscapeLeft,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+            ],
+            capabilities: [
+                .camera(purposeString: "Camera required for playing games.")
             ]
         )
     ],
