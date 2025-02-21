@@ -1,23 +1,32 @@
 import AVFoundation
 import CoreImage
+import Vision
 
 class FrameHandler: NSObject, ObservableObject {
+    
+    // MARK: AVFoundation 관련
     @Published var frame: CGImage?    // videoOutput 담을 변수
     private var permissionGranted = true
-    
     private let captureSession = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "sessionQueue")    // 백그라운드에서도 가능
-    
     private let context = CIContext()    // videoOutput 변환 과정에서 필요한 변수
+    
+    // MARK: HandPose 관련
+    private var handPoseRequest = VNDetectHumanHandPoseRequest()
+    @Published var fingerPoints: [CGPoint] = []
     
     // MARK: 가장 처음 실행할 것들
     override init() {
+        // MARK: AVFoundation 관련
         super.init()
         self.checkPermission()
         sessionQueue.async { [unowned self] in
             self.setupCaptureSession()
             self.captureSession.startRunning()
         }
+        
+        //MARK: Handpose 관련
+        handPoseRequest.maximumHandCount = 2
     }
     
     // MARK: 권한 체크
@@ -60,15 +69,100 @@ class FrameHandler: NSObject, ObservableObject {
 
 extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
     
-    // MARK: View에 표시하기 위한 image 반환
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        // MARK: AVFoundation 관련 View에 표시하기 위한 image 반환
         guard let cgImage = imageFromSampleBuffer(sampleBuffer: sampleBuffer) else { return }
         
         // All UI updates should be/ must be performed on the main queue.
         DispatchQueue.main.async { [unowned self] in
             self.frame = cgImage
         }
+        
+        // MARK: HandPose 관련
+        var thumbTipA: CGPoint
+        var indexTipA: CGPoint
+        var middleTipA: CGPoint
+        var ringTipA: CGPoint
+        var littleTipA: CGPoint
+        
+        var thumbTipB: CGPoint
+        var indexTipB: CGPoint
+        var middleTipB: CGPoint
+        var ringTipB: CGPoint
+        var littleTipB: CGPoint
+        
+        let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
+        
+        do {
+            try handler.perform([handPoseRequest])
+            guard let results = handPoseRequest.results, results.count > 1 else {
+                DispatchQueue.main.async { [unowned self] in
+                    self.fingerPoints.removeAll()
+                }
+                return }
+            
+            let firstHand = results[0]
+            let secondHand = results[1]
+            
+            let thumbPointsA = try firstHand.recognizedPoints(.thumb)
+            let indexFingerPointsA = try firstHand.recognizedPoints(.indexFinger)
+            let middleFingerPointsA = try firstHand.recognizedPoints(.middleFinger)
+            let ringFingerPointsA = try firstHand.recognizedPoints(.ringFinger)
+            let littleFingerPointsA = try firstHand.recognizedPoints(.littleFinger)
+            
+            let thumbPointsB = try secondHand.recognizedPoints(.thumb)
+            let indexFingerPointsB = try secondHand.recognizedPoints(.indexFinger)
+            let middleFingerPointsB = try secondHand.recognizedPoints(.middleFinger)
+            let ringFingerPointsB = try secondHand.recognizedPoints(.ringFinger)
+            let littleFingerPointsB = try secondHand.recognizedPoints(.littleFinger)
+            
+            guard let thumbTipPointA = thumbPointsA[.thumbTip],
+                  let indexFingerTipPointA = indexFingerPointsA[.indexTip],
+                  let middleFingerTipPointA = middleFingerPointsA[.middleTip],
+                  let ringFingerTipPointA = ringFingerPointsA[.ringTip],
+                  let littleFingerTipPointA = littleFingerPointsA[.littleTip] else { return }
+            
+            guard let thumbTipPointB = thumbPointsB[.thumbTip],
+                  let indexFingerTipPointB = indexFingerPointsB[.indexTip],
+                  let middleFingerTipPointB = middleFingerPointsB[.middleTip],
+                  let ringFingerTipPointB = ringFingerPointsB[.ringTip],
+                  let littleFingerTipPointB = littleFingerPointsB[.littleTip] else { return }
+            
+            
+            // 불확실한 값은 버린다
+            guard thumbTipPointA.confidence > 0.3 && indexFingerTipPointA.confidence > 0.3
+                    && middleFingerTipPointA.confidence > 0.3 && ringFingerTipPointA.confidence > 0.3 && littleFingerTipPointA.confidence > 0.3 else {return}
+            
+            guard thumbTipPointB.confidence > 0.3 && indexFingerTipPointB.confidence > 0.3
+                    && middleFingerTipPointB.confidence > 0.3 && ringFingerTipPointB.confidence > 0.3 && littleFingerTipPointB.confidence > 0.3 else {return}
+            
+            // 읽어온 값을 대입시켜줌 : 이 좌표 부분을 개선하는 코드가있나봄
+            thumbTipA = CGPoint(x: thumbTipPointA.location.x, y: 1 - thumbTipPointA.location.y)
+            indexTipA = CGPoint(x: indexFingerTipPointA.location.x, y: 1 - indexFingerTipPointA.location.y)
+            middleTipA = CGPoint(x: middleFingerTipPointA.location.x, y: 1 - middleFingerTipPointA.location.y)
+            ringTipA = CGPoint(x: ringFingerTipPointA.location.x, y: 1 - ringFingerTipPointA.location.y)
+            littleTipA = CGPoint(x: littleFingerTipPointA.location.x, y: 1 - littleFingerTipPointA.location.y)
+            
+            thumbTipB = CGPoint(x: thumbTipPointB.location.x, y: 1 - thumbTipPointB.location.y)
+            indexTipB = CGPoint(x: indexFingerTipPointB.location.x, y: 1 - indexFingerTipPointB.location.y)
+            middleTipB = CGPoint(x: middleFingerTipPointB.location.x, y: 1 - middleFingerTipPointB.location.y)
+            ringTipB = CGPoint(x: ringFingerTipPointB.location.x, y: 1 - ringFingerTipPointB.location.y)
+            littleTipB = CGPoint(x: littleFingerTipPointB.location.x, y: 1 - littleFingerTipPointB.location.y)
+            
+            let points = [thumbTipA, indexTipA, middleTipA, ringTipA, littleTipA,thumbTipB, indexTipB, middleTipB, ringTipB, littleTipB]
+            
+            // MARK: AVFoundation 관련
+            // All UI updates should be/ must be performed on the main queue.
+            DispatchQueue.main.async { [unowned self] in
+                self.fingerPoints = points
+            }
+            
+        }catch{
+            // FIXME: 일단 보류
+            
+        }
     }
+    
     
     // MARK: sample buffer에서 frame 읽어오기 위한 변환 과정
     private func imageFromSampleBuffer(sampleBuffer: CMSampleBuffer) -> CGImage? {
