@@ -12,7 +12,8 @@ struct FrameView: View {
                     Image(image, scale: 1.0, orientation: .up, label: label)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        //.frame(width: geometry.size.width, height: geometry.size.height)
+                        
                 } else {
                     Color.black
                 }

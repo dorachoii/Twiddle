@@ -93,6 +93,9 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
         var ringTipB: CGPoint
         var littleTipB: CGPoint
         
+        var wristA: CGPoint
+        var wristB: CGPoint
+        
         let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
         
         do {
@@ -118,6 +121,9 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
             let ringFingerPointsB = try secondHand.recognizedPoints(.ringFinger)
             let littleFingerPointsB = try secondHand.recognizedPoints(.littleFinger)
             
+            let allPointsA = try firstHand.recognizedPoints(.all)
+            let allPointsB = try secondHand.recognizedPoints(.all)
+            
             guard let thumbTipPointA = thumbPointsA[.thumbTip],
                   let indexFingerTipPointA = indexFingerPointsA[.indexTip],
                   let middleFingerTipPointA = middleFingerPointsA[.middleTip],
@@ -130,6 +136,8 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
                   let ringFingerTipPointB = ringFingerPointsB[.ringTip],
                   let littleFingerTipPointB = littleFingerPointsB[.littleTip] else { return }
             
+            guard let wristPointA = allPointsA[.wrist],
+                  let wristPointB = allPointsB[.wrist] else { return }
             
             // 불확실한 값은 버린다
             guard thumbTipPointA.confidence > 0.3 && indexFingerTipPointA.confidence > 0.3
@@ -137,6 +145,8 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
             
             guard thumbTipPointB.confidence > 0.3 && indexFingerTipPointB.confidence > 0.3
                     && middleFingerTipPointB.confidence > 0.3 && ringFingerTipPointB.confidence > 0.3 && littleFingerTipPointB.confidence > 0.3 else {return}
+            
+            guard wristPointA.confidence > 0.3 && wristPointB.confidence > 0.3 else {return}
             
             // 읽어온 값을 대입시켜줌 : 이 좌표 부분을 개선하는 코드가있나봄
             thumbTipA = CGPoint(x: thumbTipPointA.location.x, y: 1 - thumbTipPointA.location.y)
@@ -151,7 +161,10 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
             ringTipB = CGPoint(x: ringFingerTipPointB.location.x, y: 1 - ringFingerTipPointB.location.y)
             littleTipB = CGPoint(x: littleFingerTipPointB.location.x, y: 1 - littleFingerTipPointB.location.y)
             
-            let points = [thumbTipA, indexTipA, middleTipA, ringTipA, littleTipA,thumbTipB, indexTipB, middleTipB, ringTipB, littleTipB]
+            wristA = CGPoint(x: wristPointA.location.x, y: 1 - wristPointA.location.y)
+            wristB = CGPoint(x: wristPointB.location.x, y: 1 - wristPointB.location.y)
+            
+            let points = [thumbTipA, indexTipA, middleTipA, ringTipA, littleTipA,thumbTipB, indexTipB, middleTipB, ringTipB, littleTipB, wristA, wristB]
             
             // MARK: AVFoundation 관련
             // All UI updates should be/ must be performed on the main queue.
