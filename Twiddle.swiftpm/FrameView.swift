@@ -20,6 +20,18 @@ struct FrameView: View {
                 
                 // 손가락 끝에 원 그리기 함수 호출
                 drawFingerPoints(in: geometry,fingers: frameHandler.fingerPoints, color: Color.orange)
+                
+                // MARK: 체크하는 원
+                VStack {
+                    Spacer()
+                    HStack(spacing: 30) {
+                        ForEach(0..<5, id: \.self) { index in
+                            Circle()
+                                .fill(index < frameHandler.comletedFistCount ? Color.green : Color.gray)
+                                .frame(width: 30, height: 30)
+                        }
+                    }
+                }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }

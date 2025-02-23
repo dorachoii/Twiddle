@@ -13,7 +13,9 @@ class FrameHandler: NSObject, ObservableObject {
     
     // MARK: HandPose 관련
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
+    private var gestureProcessor = HandGestureProcessor()
     @Published var fingerPoints: [CGPoint] = []
+    @Published var comletedFistCount: Int = 0
     
     // MARK: 가장 처음 실행할 것들
     override init() {
@@ -66,6 +68,12 @@ class FrameHandler: NSObject, ObservableObject {
         
         videoOutput.connection(with: .video)?.isVideoMirrored = true
     }
+    
+    // MARK: handPose 감지, 주먹 쥐는지, 엄지 손가락 피는지 등
+    func detectHandPose(handA: HandPoints, handB: HandPoints)
+    {
+        self.comletedFistCount = gestureProcessor.checkFistCount(hand: handA)
+    }
 }
 
 
@@ -80,7 +88,7 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
             self.frame = cgImage
         }
         
-        // MARK: HandPose 관련
+        // MARK: HandPose 관련 위치 담을 변수
         var thumbTipA: CGPoint
         var indexTipA: CGPoint
         var middleTipA: CGPoint
@@ -95,6 +103,8 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
         
         var wristA: CGPoint
         var wristB: CGPoint
+        
+        
         
         let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
         
@@ -166,6 +176,12 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
             
             let points = [thumbTipA, indexTipA, middleTipA, ringTipA, littleTipA,thumbTipB, indexTipB, middleTipB, ringTipB, littleTipB, wristA, wristB]
             
+            // MARK: detectHandPose 함수 비동기 실행
+            defer {
+                DispatchQueue.main.async{
+                    self.detectHandPose(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
+                }
+            }
             // MARK: AVFoundation 관련
             // All UI updates should be/ must be performed on the main queue.
             DispatchQueue.main.async { [unowned self] in
