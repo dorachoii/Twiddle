@@ -15,7 +15,7 @@ class FrameHandler: NSObject, ObservableObject {
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     private var gestureProcessor = HandGestureProcessor()
     @Published var fingerPoints: [CGPoint] = []
-    @Published var comletedFistCount: Int = 0
+    @Published var completedFistCount: Int = 0
     
     // MARK: 가장 처음 실행할 것들
     override init() {
@@ -72,7 +72,7 @@ class FrameHandler: NSObject, ObservableObject {
     // MARK: handPose 감지, 주먹 쥐는지, 엄지 손가락 피는지 등
     func detectHandPose(handA: HandPoints, handB: HandPoints)
     {
-        self.comletedFistCount = gestureProcessor.checkFistCount(hand: handA)
+        self.completedFistCount = gestureProcessor.checkFistCount(hand: handA)
     }
 }
 
