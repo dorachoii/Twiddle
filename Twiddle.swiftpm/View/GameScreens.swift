@@ -5,51 +5,89 @@ struct StartScreen: View {
     @ObservedObject var gameManager: GameManager
     
     var body: some View {
-        VStack {
-            Text("Twiddle")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            Button("Start") {
-                gameManager.startGame()
+        ZStack{
+            Color.white
+                .opacity(0.1)
+                .ignoresSafeArea()
+                .background(.ultraThinMaterial)
+                .opacity(0.8)
+            VStack {
+                Image("TwiddleTitle")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 500)
+                    .padding()
+                
+                Button(action: {
+                    gameManager.startGame()
+                }) {
+                    Image("StartButton") 
+                        .resizable() 
+                        .scaledToFit() 
+                        .frame(width: 200) 
+                }.buttonStyle(PlainButtonStyle())
             }
-            .font(.title)
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
         }
     }
 }
 
-struct PauseScreen: View {
+struct NextScreen: View {
     @ObservedObject var gameManager: GameManager
     
     var body: some View {
-        VStack {
-            Text("Paused")
-                .font(.largeTitle)
-            
-            Button("Resume") {
-                gameManager.startGame()
+        ZStack{
+            Color.white
+                .opacity(0.1)
+                .ignoresSafeArea()
+                .background(.ultraThinMaterial)
+                .opacity(0.8)
+            VStack {
+                Text("Good Job!")
+                    .font(.system(size: 100)) 
+                    .fontWeight(.heavy)
+                    .padding()
+                    .shadow(radius: 10)
+                
+                Button(action: {
+                    gameManager.goToNextStep()
+                }) {
+                    Image("NextButton") 
+                        .resizable() 
+                        .scaledToFit() 
+                        .frame(width: 200) 
+                }.buttonStyle(PlainButtonStyle())
             }
-            .padding()
         }
     }
 }
+
 
 struct GameClearScreen: View {
     @ObservedObject var gameManager: GameManager
     
     var body: some View {
-        VStack {
-            Text("Game Cleared!")
-                .font(.largeTitle)
-            
-            Button("Restart") {
-                gameManager.restartGame()
+        ZStack{
+            Color.white
+                .opacity(0.1)
+                .ignoresSafeArea()
+                .background(.ultraThinMaterial)
+                .opacity(0.8)
+            VStack {
+                Text("Game Cleared!")
+                    .font(.system(size: 100)) 
+                    .fontWeight(.heavy)
+                    .padding()
+                    .shadow(radius: 10)
+                
+                Button(action: {
+                    gameManager.restartGame()
+                }) {
+                    Image("RestartButton") 
+                        .resizable() 
+                        .scaledToFit() 
+                        .frame(width: 200) 
+                }.buttonStyle(PlainButtonStyle())
             }
-            .padding()
         }
     }
 }
