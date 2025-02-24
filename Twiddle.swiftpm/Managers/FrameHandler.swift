@@ -89,7 +89,7 @@ class FrameHandler: NSObject, ObservableObject {
     }
     
     // MARK: handPose 2 - ThumbPinky
-    func detectHandPoseA(handB: HandPoints, handB: HandPoints)
+    func detectHandPoseB(handA: HandPoints, handB: HandPoints)
     {
         if let gameManager = gameManager {
             self.completedGesture = gestureProcessor.checkPinkyThumbCount(handA: handA, handB: handB)
@@ -103,7 +103,7 @@ class FrameHandler: NSObject, ObservableObject {
     }
     
     // MARK: handPose 3 - Fold & Unfold
-    func detectHandPose3(handA: HandPoints, handB: HandPoints)
+    func detectHandPoseC(handA: HandPoints, handB: HandPoints)
     {
         if let gameManager = gameManager {
             self.completedGesture = gestureProcessor.checkFoldOnebyOneCount(handA: handA, handB: handB)
@@ -144,24 +144,6 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
         
         var wristA: CGPoint
         var wristB: CGPoint
-        
-        // MARK: detectHandPose 함수 비동기 실행
-        defer {
-            DispatchQueue.main.async{
-                if let gameManager = self.gameManager{
-                    switch(gameManager.currentStepIndex){
-                    case 0:
-                        self.detectHandPoseA(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
-                    case 1:
-                        self.detectHandPoseB(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
-                    case 2:
-                        self.detectHandPoseC(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
-                    default:
-                        break
-                    }
-                }
-            }
-        }
         
         let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
         
@@ -232,6 +214,24 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
             wristB = CGPoint(x: wristPointB.location.x, y: 1 - wristPointB.location.y)
             
             let points = [thumbTipA, indexTipA, middleTipA, ringTipA, littleTipA,thumbTipB, indexTipB, middleTipB, ringTipB, littleTipB, wristA, wristB]
+            
+            // MARK: detectHandPose 함수 비동기 실행
+            defer {
+                DispatchQueue.main.async{
+                    if let gameManager = self.gameManager{
+                        switch(gameManager.currentStepIndex){
+                        case 0:
+                            self.detectHandPoseA(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
+                        case 1:
+                            self.detectHandPoseB(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
+                        case 2:
+                            self.detectHandPoseC(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
+                        default:
+                            break
+                        }
+                    }
+                }
+            }
             
             // MARK: AVFoundation 관련
             // All UI updates should be/ must be performed on the main queue.

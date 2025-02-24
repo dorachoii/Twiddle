@@ -13,9 +13,12 @@ struct GameView: View {
                 case .start:
                     StartScreen(gameManager: gameManager)
                 case .playing(let step):
-                    GameStepView(frameHandler: frameHandler, geometry: geometry, step: step)
-                case .pause:
-                    PauseScreen(gameManager: gameManager)
+                    GameStepView(frameHandler: frameHandler, gameManager: gameManager, geometry: geometry, step: step)
+                case .next:
+                    NextScreen(gameManager: gameManager)
+                        .onAppear(){
+                            AudioManager.shared.playSound(named: "stageCleared")
+                        }
                 case .gameCleared:
                     GameClearScreen(gameManager: gameManager)
                 }
@@ -24,3 +27,4 @@ struct GameView: View {
         }
     }
 }
+
