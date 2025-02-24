@@ -3,6 +3,8 @@ import CoreImage
 import Vision
 
 class FrameHandler: NSObject, ObservableObject {
+    // MARK: 싱글톤
+    static let shared = FrameHandler()
     
     // MARK: AVFoundation 관련
     @Published var frame: CGImage?    // videoOutput 담을 변수
@@ -15,7 +17,10 @@ class FrameHandler: NSObject, ObservableObject {
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     private var gestureProcessor = HandGestureProcessor()
     @Published var fingerPoints: [CGPoint] = []
-    @Published var completedFistCount: Int = 0
+    @Published var completedGesture: Int = 0
+    
+    // MARK: GameManager 할당 위한 변수
+    var gameManager: GameManager?
     
     // MARK: 가장 처음 실행할 것들
     override init() {
@@ -69,10 +74,46 @@ class FrameHandler: NSObject, ObservableObject {
         videoOutput.connection(with: .video)?.isVideoMirrored = true
     }
     
-    // MARK: handPose 감지, 주먹 쥐는지, 엄지 손가락 피는지 등
-    func detectHandPose(handA: HandPoints, handB: HandPoints)
+    // MARK: handPose 1 - fist
+    func detectHandPoseA(handA: HandPoints, handB: HandPoints)
     {
-        self.completedFistCount = gestureProcessor.checkFistCount(hand: handA)
+        if let gameManager = gameManager {
+            self.completedGesture = gestureProcessor.checkFistCount(hand: handA)
+            if self.completedGesture >= gameManager.currentStep.requiredCount{
+                DispatchQueue.main.async{
+                    self.completedGesture = 0
+                    gameManager.nextStep()
+                }
+            }
+        }
+    }
+    
+    // MARK: handPose 2 - ThumbPinky
+    func detectHandPoseA(handB: HandPoints, handB: HandPoints)
+    {
+        if let gameManager = gameManager {
+            self.completedGesture = gestureProcessor.checkPinkyThumbCount(handA: handA, handB: handB)
+            if self.completedGesture >= gameManager.currentStep.requiredCount{
+                DispatchQueue.main.async{
+                    self.completedGesture = 0
+                    gameManager.nextStep()
+                }
+            }
+        }
+    }
+    
+    // MARK: handPose 3 - Fold & Unfold
+    func detectHandPose3(handA: HandPoints, handB: HandPoints)
+    {
+        if let gameManager = gameManager {
+            self.completedGesture = gestureProcessor.checkFoldOnebyOneCount(handA: handA, handB: handB)
+            if self.completedGesture >= gameManager.currentStep.requiredCount{
+                DispatchQueue.main.async{
+                    self.completedGesture = 0
+                    gameManager.nextStep()
+                }
+            }
+        }
     }
 }
 
@@ -104,7 +145,23 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
         var wristA: CGPoint
         var wristB: CGPoint
         
-        
+        // MARK: detectHandPose 함수 비동기 실행
+        defer {
+            DispatchQueue.main.async{
+                if let gameManager = self.gameManager{
+                    switch(gameManager.currentStepIndex){
+                    case 0:
+                        self.detectHandPoseA(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
+                    case 1:
+                        self.detectHandPoseB(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
+                    case 2:
+                        self.detectHandPoseC(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
+                    default:
+                        break
+                    }
+                }
+            }
+        }
         
         let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
         
@@ -176,18 +233,11 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
             
             let points = [thumbTipA, indexTipA, middleTipA, ringTipA, littleTipA,thumbTipB, indexTipB, middleTipB, ringTipB, littleTipB, wristA, wristB]
             
-            // MARK: detectHandPose 함수 비동기 실행
-            defer {
-                DispatchQueue.main.async{
-                    self.detectHandPose(handA: HandPoints(wrist: wristA, thumbTip: thumbTipA, indexTip: indexTipA, middleTip: middleTipA,ringTip: ringTipA,littleTip: littleTipA), handB: HandPoints(wrist: wristB, thumbTip: thumbTipB, indexTip: indexTipB, middleTip: middleTipB, ringTip: ringTipB, littleTip: littleTipB))
-                }
-            }
             // MARK: AVFoundation 관련
             // All UI updates should be/ must be performed on the main queue.
             DispatchQueue.main.async { [unowned self] in
                 self.fingerPoints = points
             }
-            
         }catch{
             // FIXME: 일단 보류
             
@@ -203,5 +253,4 @@ extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
         
         return cgImage
     }
-    
 }
