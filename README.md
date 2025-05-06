@@ -215,13 +215,15 @@ class HandGestureProcessor {
 
 ## Stage 01. グーからパーに
 ![twiddle](https://github.com/user-attachments/assets/3e06bcb1-cf46-4252-b82e-3ae9ff74633e)
+![twiddle_6 (2)](https://github.com/user-attachments/assets/e1098e4c-963c-4f0c-8d1b-6ffc247b63a2)
 
 ## Stage 02. 親指と小指を交互に開く
 ![twiddle_8 (1)](https://github.com/user-attachments/assets/527eee59-4c6d-4df9-a750-09a7bf3dec70)
 ![twiddle_8 (1)](https://github.com/user-attachments/assets/875dc5ff-93ca-4959-b6f6-e1e8b972db42)
 
 ## Stage 03. 一本ずつ順番に指を開く
-![Uploading twiddle_11.gif…]()
+![twiddle_11](https://github.com/user-attachments/assets/2cc4b5d9-76a5-4c11-95bb-2ed3c943c68f)
+
 
 ## 🔎 振り返り
 
